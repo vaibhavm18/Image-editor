@@ -1,6 +1,6 @@
 import { Dispatch, MouseEvent, SetStateAction, useState } from "react";
 import Inpainting from "./Inpainting";
-import MergeImages from "./MergeImages";
+import TransparentImage from "./TransparentImage";
 
 interface Props {
   file: File;
@@ -19,6 +19,7 @@ export default function EditImage({ file, removeFile }: Props) {
     removeFile(null);
     removeMask(null);
   };
+
   return (
     <>
       <div className=" relative z-10">
@@ -35,7 +36,8 @@ export default function EditImage({ file, removeFile }: Props) {
         </button>
       )}
       {maskImage && (
-        <MergeImages maskImageSrc={maskImage} originalImage={file} />
+        // <MergeImages maskImageSrc={maskImage} originalImage={file} />
+        <TransparentImage maskImageSrc={maskImage} originalImage={file} />
       )}
     </>
   );

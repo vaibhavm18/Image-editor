@@ -5,15 +5,10 @@ interface Props {
   originalImage: File;
 }
 
-const colors: string[] = ["red", "green", "blue"];
-function getRandomColor(): string {
-  const randomIndex = Math.floor(Math.random() * colors.length);
-  return colors[randomIndex];
-}
-
-// Example usage
-const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
+const TransparentImage: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [bgColor, setBgColor] = useState<string>("red-500");
+
   useEffect(() => {
     if (originalImage && canvasRef.current) {
       const canvas = canvasRef.current;
@@ -37,6 +32,7 @@ const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
         canvas.width = originalImg.width;
         canvas.height = originalImg.height;
 
+        // Draw the original image
         ctx.drawImage(originalImg, 0, 0);
 
         maskImg.src = maskImageSrc;
@@ -52,6 +48,7 @@ const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
           offscreenCanvas.width = originalImg.width;
           offscreenCanvas.height = originalImg.height;
 
+          // Draw the mask image onto the off-screen canvas
           offscreenCtx.drawImage(
             maskImg,
             0,
@@ -68,18 +65,25 @@ const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
           );
           const maskData = maskImageData.data;
 
+          const originalImageData = ctx.getImageData(
+            0,
+            0,
+            originalImg.width,
+            originalImg.height
+          );
+          const originalData = originalImageData.data;
+
           for (let i = 0; i < maskData.length; i += 4) {
             if (
-              maskData[i] === 255 &&
-              maskData[i + 1] === 255 &&
-              maskData[i + 2] === 255
+              maskData[i] >= 200 &&
+              maskData[i + 1] >= 200 &&
+              maskData[i + 2] >= 200
             ) {
-              const originalPixelIndex = i / 4;
-              const x = originalPixelIndex % originalImg.width;
-              const y = Math.floor(originalPixelIndex / originalImg.width);
-              ctx.clearRect(x, y, 1, 1);
+              originalData[i + 3] = 0; // Setting image transparency to 0
             }
           }
+
+          ctx.putImageData(originalImageData, 0, 0);
         };
 
         maskImg.onerror = (e) => {
@@ -103,14 +107,17 @@ const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
       link.click();
     }
   };
-  const [color, setColor] = useState("bg-red-500");
+
   const changeColor = () => {
-    setColor(getRandomColor());
+    const colors = ["red-500", "green-500", "blue-500"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    setBgColor(randomColor);
   };
+
   return (
-    <div className="text-center relative mt-8 ">
-      <div className={"bg-" + color + "-500"}>
-        <canvas ref={canvasRef} />
+    <div className="text-center relative mt-8">
+      <div className={`bg-${bgColor} p-4`}>
+        <canvas ref={canvasRef} className="border border-gray-300" />
       </div>
       <button
         className="px-4 py-2 mt-4 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
@@ -122,10 +129,10 @@ const MergeImages: React.FC<Props> = ({ maskImageSrc, originalImage }) => {
         className="px-4 py-2 mt-4 ml-4 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
         onClick={changeColor}
       >
-        change background
+        Change Background Color
       </button>
     </div>
   );
 };
 
-export default MergeImages;
+export default TransparentImage;
